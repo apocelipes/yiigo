@@ -21,7 +21,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-func ServeHttp(ctx context.Context) {
+func NewHttpServer(ctx context.Context) *http.Server {
 	addr := ":" + viper.GetString("port.http")
 	// Create a gRPC client conn
 	conn, err := grpc.NewClient("0.0.0.0:"+viper.GetString("port.grpc"), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -76,16 +76,20 @@ func ServeHttp(ctx context.Context) {
 		AllowCredentials: true,
 	}).Handler(mux)
 	// Serve HTTP server
-	s := &http.Server{
+	srv := &http.Server{
 		Addr:         addr,
 		Handler:      withCors,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  10 * time.Second,
 	}
-	log.Info(ctx, "Serving HTTP OK", zap.String("port", addr))
-	if err = s.ListenAndServe(); err != nil {
-		log.Fatal(ctx, "Error ListenAndServe", zap.Error(err))
+	return srv
+}
+
+func ServeHttp(ctx context.Context, srv *http.Server) {
+	log.Info(ctx, "Serving HTTP OK", zap.String("port", srv.Addr))
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatal(ctx, "Error HTTP ListenAndServe", zap.Error(err))
 	}
 }
 

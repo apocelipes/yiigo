@@ -31,8 +31,7 @@ func Log(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		now := time.Now()
 		body := "<nil>"
-
-		var err error
+		size := 0
 
 		buf := bufPool.Get().(*bytes.Buffer)
 		buf.Reset()
@@ -43,13 +42,14 @@ func Log(next http.Handler) http.Handler {
 
 		// 记录日志
 		defer func() {
-			fields := make([]zap.Field, 0, 10)
+			fields := make([]zap.Field, 0, 11)
 			fields = append(fields,
 				zap.String("method", r.Method),
 				zap.String("path", r.URL.Path),
 				zap.String("ip", r.RemoteAddr),
 				zap.Any("header", r.Header),
 				zap.String("req_body", body),
+				zap.Int("req_size", size),
 			)
 			// 响应体
 			respSize := buf.Len()
@@ -59,10 +59,6 @@ func Log(next http.Handler) http.Handler {
 				fields = append(fields, zap.String("resp_body", "body too large"))
 			}
 			fields = append(fields, zap.Int("resp_size", respSize))
-			// 错误
-			if err != nil {
-				fields = append(fields, zap.String("err_body", err.Error()))
-			}
 			fields = append(fields,
 				zap.String("identity", identity.FromContext(r.Context()).String()),
 				zap.Int("status", ww.Status()),
@@ -73,35 +69,25 @@ func Log(next http.Handler) http.Handler {
 
 		// 请求包含body
 		if r.Body != nil && r.Body != http.NoBody {
-			switch yiigo.ContentType(r.Header) {
-			case yiigo.ContentForm:
-				if _err := r.ParseForm(); _err != nil {
-					err = errors.WithMessage(_err, "Form解析失败")
-					result.ErrSystem(result.E(err)).JSON(w, r)
-					return
-				}
-				body = r.Form.Encode()
-			case yiigo.ContentFormMultipart:
-				if _err := r.ParseMultipartForm(yiigo.MaxFormMemory); _err != nil {
-					if _err != http.ErrNotMultipart {
-						err = errors.WithMessage(_err, "MultipartForm解析失败")
-						result.ErrSystem(result.E(err)).JSON(w, r)
-						return
-					}
-				}
-				body = r.Form.Encode()
-			case yiigo.ContentJSON:
-				b, _err := io.ReadAll(r.Body) // 取出Body
-				if _err != nil {
-					err = errors.WithMessage(_err, "请求Body读取失败")
-					result.ErrSystem(result.E(err)).JSON(w, r)
-					return
-				}
-				_ = r.Body.Close() // 关闭原Body
-				body = string(pretty.Ugly(b))
-				// 重置Body
-				r.Body = io.NopCloser(bytes.NewReader(b))
+			b, err := io.ReadAll(r.Body) // 取出Body
+			if err != nil {
+				result.ErrSystem(result.E(errors.WithMessage(err, "请求Body读取失败"))).JSON(w, r)
+				return
 			}
+			_ = r.Body.Close() // 关闭原Body
+			// 记录Body
+			size = len(b)
+			if size > MaxBodyLogSize {
+				body = string(b[:MaxBodyLogSize])
+			} else {
+				if yiigo.ContentType(r.Header) == yiigo.ContentJSON {
+					body = string(pretty.Ugly(b))
+				} else {
+					body = string(b)
+				}
+			}
+			// 重置Body
+			r.Body = io.NopCloser(bytes.NewReader(b))
 		}
 
 		next.ServeHTTP(ww, r)

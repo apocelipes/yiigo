@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var v *protovalidate.Validator
+var v protovalidate.Validator
 
 func Init(ctx context.Context) {
 	var err error

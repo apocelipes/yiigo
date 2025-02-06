@@ -44,22 +44,7 @@ var root = &cobra.Command{
 }
 
 func serving(ctx context.Context) {
-	// 创建一个通道来监听信号
-	ch := make(chan os.Signal, 1)
-	// 监听特定的系统信号
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM)
-	// serving
-	go serveHttp(ctx)
-	// 处理信号
-	sig := <-ch
-	log.Warn(context.TODO(), "Received Signal", zap.String("signal", sig.String()))
-	// 执行清理操作
-	config.CleanUp()
-	// 退出程序
-	os.Exit(0)
-}
-
-func serveHttp(ctx context.Context) {
+	// 跨域设置
 	withCors := cors.New(cors.Options{
 		// AllowedOrigins:   []string{"*"},
 		AllowOriginFunc: func(origin string) bool {
@@ -70,22 +55,40 @@ func serveHttp(ctx context.Context) {
 		ExposedHeaders:   []string{trace.TraceId}, // 服务器暴露一些自定义的头信息，允许客户端访问
 		AllowCredentials: true,
 	})
-
+	// 创建路由
 	r := chi.NewRouter()
 	r.Use(withCors.Handler, middleware.TraceId, middleware.Recovery)
 	r.Mount("/debug", chi_middleware.Profiler())
 	// 注册路由
 	router.App(r)
-
-	s := &http.Server{
+	// 创建服务
+	srv := &http.Server{
 		Addr:         ":" + viper.GetString("app.port"),
 		Handler:      r,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  10 * time.Second,
 	}
-	log.Info(ctx, "Serving OK", zap.String("port", s.Addr))
-	if err := s.ListenAndServe(); err != nil {
-		log.Fatal(context.Background(), "serving error", zap.Error(err))
+	// 创建一个通道来监听信号
+	ch := make(chan os.Signal, 1)
+	// 监听特定的系统信号
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM)
+	// 启动服务
+	go func() {
+		log.Info(ctx, "Serving OK", zap.String("port", srv.Addr))
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(context.Background(), "serving error", zap.Error(err))
+		}
+	}()
+	// 处理信号
+	sig := <-ch
+	log.Warn(context.TODO(), "Received Signal", zap.String("signal", sig.String()))
+	// 关闭服务
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Error(ctx, "Error Server Shutdown", zap.Error(err))
 	}
+	// 执行清理操作
+	config.CleanUp()
+	// 退出程序
+	os.Exit(0)
 }

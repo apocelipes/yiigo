@@ -41,12 +41,19 @@ func serving(ctx context.Context) {
 	// 监听特定的系统信号
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGHUP, syscall.SIGQUIT, syscall.SIGTERM)
 	// serve grpc
-	go server.ServeGrpc(ctx)
+	grpcSrv := server.NewGrpcServer(ctx)
+	go server.ServeGrpc(ctx, grpcSrv)
 	// serve http
-	go server.ServeHttp(ctx)
+	httpSrv := server.NewHttpServer(ctx)
+	go server.ServeHttp(ctx, httpSrv)
 	// 处理信号
 	sig := <-ch
 	log.Warn(context.TODO(), "Received system signal", zap.String("signal", sig.String()))
+	// 关闭服务
+	if err := httpSrv.Shutdown(ctx); err != nil {
+		log.Error(ctx, "Error HTTP Server Shutdown", zap.Error(err))
+	}
+	grpcSrv.GracefulStop()
 	// 执行清理操作
 	config.CleanUp()
 	// 退出程序
