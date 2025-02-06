@@ -5,7 +5,7 @@
 [![pkg.go.dev](https://img.shields.io/badge/dev-reference-007d9c?logo=go&logoColor=white&style=flat)](https://pkg.go.dev/github.com/shenghui0779/yiigo)
 [![Apache 2.0 license](http://img.shields.io/badge/license-Apache%202.0-brightgreen.svg)](http://opensource.org/licenses/apache2.0)
 
-Go项目「脚手架」和「实用库」
+Go Web开发「脚手架」和「实用库」
 
 ## 工具集
 
