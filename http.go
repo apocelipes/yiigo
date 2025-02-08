@@ -20,6 +20,7 @@ const (
 const (
 	ContentText          = "text/plain; charset=utf-8"
 	ContentJSON          = "application/json"
+	ContentXML           = "application/xml"
 	ContentForm          = "application/x-www-form-urlencoded"
 	ContentStream        = "application/octet-stream"
 	ContentFormMultipart = "multipart/form-data"
