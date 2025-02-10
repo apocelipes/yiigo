@@ -14,9 +14,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/shenghui0779/yiigo"
-	"github.com/shenghui0779/yiigo/cmd/internal"
 	"github.com/spf13/cobra"
+	"github.com/yiigo/yiigo/internal"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -106,7 +105,7 @@ func main() {
 		Use:   "gg",
 		Short: "生成Get方法^_^",
 		Long:  "为结构体生成`Get`方法，避免空指针导致Panic",
-		Example: yiigo.CmdExamples(
+		Example: internal.CmdExamples(
 			"gg xxx.go",
 			"//go:generate gg xxx.go",
 		),

@@ -7,9 +7,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/shenghui0779/yiigo"
-	"github.com/shenghui0779/yiigo/cmd/internal"
 	"github.com/spf13/cobra"
+	"github.com/yiigo/yiigo/internal"
 	"golang.org/x/mod/modfile"
 )
 
@@ -44,7 +43,7 @@ func project() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "new",
 		Short: "创建项目",
-		Example: yiigo.CmdExamples(
+		Example: internal.CmdExamples(
 			"-- HTTP --",
 			"yiigo new demo",
 			"yiigo new demo --mod=xxx.yyy.com",
@@ -111,7 +110,7 @@ func app() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "app",
 		Short: "创建应用",
-		Example: yiigo.CmdExamples(
+		Example: internal.CmdExamples(
 			"-- HTTP --",
 			"yiigo app hello",
 			"-- gRPC --",
@@ -173,7 +172,7 @@ func ent() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ent",
 		Short: "创建Ent实例",
-		Example: yiigo.CmdExamples(
+		Example: internal.CmdExamples(
 			"-- 默认实例 --",
 			"yiigo ent",
 			"-- 指定名称 --",

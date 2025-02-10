@@ -7,7 +7,7 @@ Generate `Get` method for structure (support generics !!!), inspired by `protoc-
 ## 安装
 
 ```shell
-go install github.com/shenghui0779/yiigo/cmd/gg@latest
+go install github.com/yiigo/yiigo/cmd/gg@latest
 ```
 
 ## 使用
@@ -31,7 +31,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/shenghui0779/yiigo"
+	"github.com/yiigo/contrib"
 )
 
 //go:generate gg demo.go
@@ -50,7 +50,7 @@ type Demo[T any, E comparable] struct {
 	FieldCode      Code
 	FieldCtx       context.Context
 	FieldTime      time.Time
-	FieldStep      yiigo.Step
+	FieldStep      contrib.Step
 	FieldGenT      T
 	FieldGenE      E
 }

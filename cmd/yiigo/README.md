@@ -5,7 +5,7 @@
 ## 安装
 
 ```shell
-go install github.com/shenghui0779/yiigo/cmd/yiigo@latest
+go install github.com/yiigo/yiigo/cmd/yiigo@latest
 ```
 
 ## 创建项目

@@ -7,15 +7,15 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"text/template"
 
-	"github.com/shenghui0779/yiigo"
-	"github.com/shenghui0779/yiigo/cmd/internal/ent"
-	"github.com/shenghui0779/yiigo/cmd/internal/grpc"
-	"github.com/shenghui0779/yiigo/cmd/internal/http"
+	"github.com/yiigo/yiigo/internal/ent"
+	"github.com/yiigo/yiigo/internal/grpc"
+	"github.com/yiigo/yiigo/internal/http"
 )
 
 type Params struct {
@@ -189,7 +189,7 @@ func buildTmpl(fsys embed.FS, path, output string, params *Params) {
 		log.Fatalln(FmtErr(err))
 	}
 	// 文件创建
-	f, err := yiigo.CreateFile(output)
+	f, err := CreateFile(output)
 	if err != nil {
 		log.Fatalln(FmtErr(err))
 	}
@@ -228,6 +228,19 @@ func IsDirEmpty(path string) (string, bool) {
 	return absPath, len(entries) == 0
 }
 
+// CreateFile 创建或清空指定的文件
+// 文件已存在，则清空；文件或目录不存在，则以0775权限创建
+func CreateFile(filename string) (*os.File, error) {
+	abspath, err := filepath.Abs(filename)
+	if err != nil {
+		return nil, err
+	}
+	if err = os.MkdirAll(path.Dir(abspath), 0o775); err != nil {
+		return nil, err
+	}
+	return os.OpenFile(abspath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o775)
+}
+
 func FmtErr(err error) error {
 	funcName := ""
 	// Skip level 1 to get the caller function
@@ -238,4 +251,12 @@ func FmtErr(err error) error {
 		funcName = name[strings.Index(name, ".")+1:]
 	}
 	return fmt.Errorf("[%s(%s:%d)] %w", funcName, file, line, err)
+}
+
+// CmdExamples formats the given examples to the cli.
+func CmdExamples(ex ...string) string {
+	for i := range ex {
+		ex[i] = "  " + ex[i] // indent each row with 2 spaces.
+	}
+	return strings.Join(ex, "\n")
 }
