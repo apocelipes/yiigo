@@ -1,34 +1,22 @@
 package util
 
 import (
-	"context"
-	"fmt"
-	"runtime/debug"
-
-	"{{.Module}}/pkg/lib/log"
-
-	"github.com/yiigo/contrib"
-	"go.uber.org/zap"
+	"regexp"
+	"strings"
 )
 
-// Safe recover for goroutine when panic
-func Safe(ctx context.Context, fn func(ctx context.Context)) {
-	defer func() {
-		if err := recover(); err != nil {
-			log.Error(ctx, "Goroutine panic recovered", zap.Any("error", err), zap.ByteString("stack", debug.Stack()))
-		}
-	}()
-	fn(ctx)
-}
+func ExcelColumnIndex(name string) int {
+	name = strings.ToUpper(name)
+	if ok, err := regexp.MatchString(`^[A-Z]{1,2}$`, name); err != nil || !ok {
+		return -1
+	}
 
-func CheckFields(fields, columns []string) error {
-	if len(fields) == 0 {
-		return nil
-	}
-	for _, v := range fields {
-		if !contrib.SliceIn(columns, v) {
-			return fmt.Errorf("invalid field: %s", v)
+	index := 0
+	for i, v := range name {
+		if i != 0 {
+			index = (index + 1) * 26
 		}
+		index += int(v - 'A')
 	}
-	return nil
+	return index
 }

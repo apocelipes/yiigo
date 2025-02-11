@@ -4,12 +4,14 @@ import (
 	"net/http"
 
 	"{{.Module}}/pkg/internal/identity"
+
+	"github.com/yiigo/contrib"
 )
 
 // Identity parse identity into context
 func Identity(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if token := r.Header.Get("Authorization"); len(token) != 0 {
+		if token := r.Header.Get(contrib.HeaderAuthorization); len(token) != 0 {
 			ctx := identity.NewContext(r.Context(), token)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
