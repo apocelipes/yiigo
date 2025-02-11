@@ -2,7 +2,7 @@ package pgarray
 
 import (
 	"entgo.io/ent/dialect/sql"
-	"github.com/shenghui0779/yiigo/pgtype"
+	"github.com/yiigo/contrib/pgtype"
 )
 
 // 查找包含单个元素的数组

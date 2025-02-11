@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/pkg/errors"
-	"github.com/shenghui0779/yiigo"
+	"github.com/yiigo/contrib"
 	"github.com/tidwall/pretty"
 	"go.uber.org/zap"
 )
@@ -81,7 +81,7 @@ func Log(next http.Handler) http.Handler {
 			if size > MaxBodyLogSize {
 				body = string(b[:MaxBodyLogSize])
 			} else {
-				if yiigo.ContentType(r.Header) == yiigo.ContentJSON {
+				if contrib.ContentType(r.Header) == contrib.ContentJSON {
 					body = string(pretty.Ugly(b))
 				} else {
 					body = string(b)

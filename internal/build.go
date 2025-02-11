@@ -94,6 +94,15 @@ func initProject(root, mod string, fsys embed.FS) {
 		output := genOutput(root, v.Name(), "")
 		buildTmpl(fsys, v.Name(), filepath.Clean(output), params)
 	}
+	// lib目录文件
+	_ = fs.WalkDir(fsys, "pkg/lib", func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() || filepath.Ext(path) == ".go" {
+			return nil
+		}
+		output := genOutput(root, path, "")
+		buildTmpl(fsys, path, filepath.Clean(output), params)
+		return nil
+	})
 	// internal目录文件
 	_ = fs.WalkDir(fsys, "pkg/internal", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() || filepath.Ext(path) == ".go" {

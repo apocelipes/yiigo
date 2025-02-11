@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/shenghui0779/yiigo"
-	"github.com/shenghui0779/yiigo/validator"
+	"github.com/yiigo/contrib"
+	"github.com/yiigo/contrib/validator"
 )
 
 func BindJSON(r *http.Request, obj any) error {
@@ -21,19 +21,19 @@ func BindJSON(r *http.Request, obj any) error {
 
 // BindForm 解析Form表单并校验
 func BindForm(r *http.Request, obj any) error {
-	switch yiigo.ContentType(r.Header) {
-	case yiigo.ContentForm:
+	switch contrib.ContentType(r.Header) {
+	case contrib.ContentForm:
 		if err := r.ParseForm(); err != nil {
 			return err
 		}
-	case yiigo.ContentFormMultipart:
-		if err := r.ParseMultipartForm(yiigo.MaxFormMemory); err != nil {
+	case contrib.ContentFormMultipart:
+		if err := r.ParseMultipartForm(contrib.MaxFormMemory); err != nil {
 			if err != http.ErrNotMultipart {
 				return err
 			}
 		}
 	}
-	if err := yiigo.MapForm(obj, r.Form); err != nil {
+	if err := contrib.MapForm(obj, r.Form); err != nil {
 		return err
 	}
 	return validator.ValidateStruct(obj)

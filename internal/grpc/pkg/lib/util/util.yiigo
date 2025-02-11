@@ -7,7 +7,7 @@ import (
 
 	"{{.Module}}/pkg/internal/log"
 
-	"github.com/shenghui0779/yiigo"
+	"github.com/yiigo/contrib"
 	"go.uber.org/zap"
 )
 
@@ -26,7 +26,7 @@ func CheckFields(fields, columns []string) error {
 		return nil
 	}
 	for _, v := range fields {
-		if !yiigo.SliceIn(columns, v) {
+		if !contrib.SliceIn(columns, v) {
 			return fmt.Errorf("invalid field: %s", v)
 		}
 	}

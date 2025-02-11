@@ -9,7 +9,7 @@ import (
 
 	"{{.Module}}/pkg/internal/log"
 
-	"github.com/shenghui0779/yiigo/xcrypto"
+	"github.com/yiigo/contrib/xcrypto"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )

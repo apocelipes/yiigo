@@ -7,7 +7,7 @@ Go gRPC项目快速开发脚手架
 - 日志使用 [zap](https://github.com/uber-go/zap)
 - 配置使用 [viper](https://github.com/spf13/viper)
 - 命令行使用 [cobra](https://github.com/spf13/cobra)
-- 工具包使用 [yiigo](https://github.com/shenghui0779/yiigo)
+- 工具包使用 [yiigo](https://github.com/yiigo/contrib)
 - 使用 [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway) 同时支持 grpc 和 http 服务
 - http服务支持跨域
 - 支持 proto 参数验证

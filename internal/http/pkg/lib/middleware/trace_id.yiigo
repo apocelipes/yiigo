@@ -5,7 +5,7 @@ import (
 
 	"{{.Module}}/pkg/internal/trace"
 
-	"github.com/shenghui0779/yiigo/metadata"
+	"github.com/yiigo/contrib/metadata"
 )
 
 // TraceId is a middleware that injects a trace ID into the context of each request.

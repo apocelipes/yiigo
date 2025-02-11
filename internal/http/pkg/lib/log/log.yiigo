@@ -3,7 +3,7 @@ package log
 import (
 	"context"
 
-	"github.com/shenghui0779/yiigo/metadata"
+	"github.com/yiigo/contrib/metadata"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

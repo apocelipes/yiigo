@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"{{.Module}}/pkg/internal/identity"
 	"{{.Module}}/pkg/internal/log"
 	"{{.Module}}/pkg/internal/result"
 
@@ -21,12 +20,6 @@ func Recovery(next http.Handler) http.Handler {
 				result.ErrSystem().JSON(w, r)
 			}
 		}()
-		// 注入Identity
-		if token := r.Header.Get("Authorization"); len(token) != 0 {
-			ctx := identity.NewContext(r.Context(), token)
-			next.ServeHTTP(w, r.WithContext(ctx))
-			return
-		}
 		next.ServeHTTP(w, r)
 	})
 }
