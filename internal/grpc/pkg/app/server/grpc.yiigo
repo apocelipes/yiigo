@@ -6,8 +6,9 @@ import (
 
 	"{{.Module}}/pkg/{{.AppPkg}}/api"
 	"{{.Module}}/pkg/{{.AppPkg}}/service"
-	"{{.Module}}/pkg/internal/log"
-	"{{.Module}}/pkg/internal/middleware"
+	"{{.Module}}/pkg/lib/log"
+	internal_middleware "{{.Module}}/pkg/internal/middleware"
+	lib_middleware "{{.Module}}/pkg/lib/middleware"
 
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -18,10 +19,10 @@ import (
 
 func NewGrpcServer(ctx context.Context) *grpc.Server {
 	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		middleware.TraceId,
-		middleware.Recovery,
-		middleware.Log,
-		middleware.Validator,
+		lib_middleware.TraceId,
+		lib_middleware.Recovery,
+		lib_middleware.Log,
+		internal_middleware.Validator,
 	))
 	// 服务注册
 	registerGrpc(srv)

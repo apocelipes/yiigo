@@ -7,11 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"{{.Module}}/pkg/internal/log"
+	"{{.Module}}/pkg/lib/log"
 
-	"github.com/yiigo/contrib/xcrypto"
 	"github.com/spf13/viper"
+	"github.com/yiigo/contrib"
+	"github.com/yiigo/contrib/xcrypto"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 )
 
 // Identity 授权身份
@@ -82,8 +84,16 @@ func New(id int64, token string) Identity {
 type identityKey struct{}
 
 // NewContext 将Identity注入context
-func NewContext(ctx context.Context, token string) context.Context {
-	return context.WithValue(ctx, identityKey{}, FromAuthToken(ctx, token))
+func NewContext(ctx context.Context) context.Context {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return context.WithValue(ctx, identityKey{}, NewEmpty())
+	}
+	token := md.Get(contrib.HeaderAuthorization)
+	if len(token) == 0 {
+		return context.WithValue(ctx, identityKey{}, NewEmpty())
+	}
+	return context.WithValue(ctx, identityKey{}, FromAuthToken(ctx, token[0]))
 }
 
 // FromContext 获取授权信息

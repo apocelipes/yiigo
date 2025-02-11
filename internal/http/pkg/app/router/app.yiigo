@@ -5,8 +5,8 @@ import (
 
 	"{{.Module}}/pkg/{{.AppPkg}}/api"
 	"{{.Module}}/pkg/{{.AppPkg}}/web"
-	lib_middleware "{{.Module}}/pkg/internal/middleware"
-	"{{.Module}}/pkg/internal/util"
+	lib_middleware "{{.Module}}/pkg/lib/middleware"
+	"{{.Module}}/pkg/lib/util"
 
 	"github.com/go-chi/chi/v5"
 )

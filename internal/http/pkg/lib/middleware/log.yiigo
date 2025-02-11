@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"{{.Module}}/pkg/internal/identity"
-	"{{.Module}}/pkg/internal/log"
+	"{{.Module}}/pkg/lib/log"
 	"{{.Module}}/pkg/internal/result"
 
 	"github.com/go-chi/chi/v5/middleware"

@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"{{.Module}}/pkg/internal/trace"
+	"{{.Module}}/pkg/lib/trace"
 
 	"github.com/yiigo/contrib/metadata"
 )

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"{{.Module}}/pkg/internal/log"
+	"{{.Module}}/pkg/lib/log"
 	"{{.Module}}/pkg/internal/result"
 
 	"go.uber.org/zap"

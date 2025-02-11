@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	"{{.Module}}/pkg/internal/log"
+	"{{.Module}}/pkg/lib/log"
 
 	"github.com/yiigo/contrib"
 	"go.uber.org/zap"

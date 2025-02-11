@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"{{.Module}}/pkg/internal/log"
+	"{{.Module}}/pkg/lib/log"
 
 	"go.uber.org/zap"
 )

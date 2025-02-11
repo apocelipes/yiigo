@@ -2,11 +2,8 @@ package middleware
 
 import (
 	"net/http"
-	"runtime/debug"
 
 	"{{.Module}}/pkg/internal/identity"
-
-	"go.uber.org/zap"
 )
 
 // Identity parse identity into context

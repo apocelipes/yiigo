@@ -8,10 +8,13 @@ import (
 
 	"{{.Module}}/pkg/{{.AppPkg}}/config"
 	"{{.Module}}/pkg/{{.AppPkg}}/server"
-	"{{.Module}}/pkg/internal/log"
+	"{{.Module}}/pkg/lib/log"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var cfgFile string
@@ -44,15 +47,23 @@ func serving(ctx context.Context) {
 	grpcSrv := server.NewGrpcServer(ctx)
 	go server.ServeGrpc(ctx, grpcSrv)
 	// serve http
-	httpSrv := server.NewHttpServer(ctx)
+	// Create a gRPC client conn
+	conn, err := grpc.NewClient("0.0.0.0:"+viper.GetString("port.grpc"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatal(ctx, "Error grpc.NewClient", zap.Error(err))
+	}
+	httpSrv := server.NewHttpServer(ctx, conn)
 	go server.ServeHttp(ctx, httpSrv)
 	// 处理信号
 	sig := <-ch
 	log.Warn(context.TODO(), "Received system signal", zap.String("signal", sig.String()))
-	// 关闭服务
+	// 关闭http服务
 	if err := httpSrv.Shutdown(ctx); err != nil {
 		log.Error(ctx, "Error HTTP Server Shutdown", zap.Error(err))
 	}
+	// 断开grpc连接
+	_ = conn.Close()
+	// 关闭grpc服务
 	grpcSrv.GracefulStop()
 	// 执行清理操作
 	config.CleanUp()

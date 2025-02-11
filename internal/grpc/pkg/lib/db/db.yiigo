@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"{{.Module}}/pkg/internal/log"
+	"{{.Module}}/pkg/lib/log"
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"

@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 
-	"{{.Module}}/pkg/internal/log"
+	"{{.Module}}/pkg/lib/log"
 
 	"go.uber.org/zap"
 )

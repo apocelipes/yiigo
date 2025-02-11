@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"{{.Module}}/pkg/{{.AppPkg}}/service/greeter"
-	"{{.Module}}/pkg/internal/log"
+	"{{.Module}}/pkg/lib/log"
 	"{{.Module}}/pkg/internal/result"
-	"{{.Module}}/pkg/internal/util"
+	"{{.Module}}/pkg/lib/util"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"

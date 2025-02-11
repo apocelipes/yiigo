@@ -10,9 +10,9 @@ import (
 
 	"{{.Module}}/pkg/{{.AppPkg}}/config"
 	"{{.Module}}/pkg/{{.AppPkg}}/router"
-	"{{.Module}}/pkg/internal/log"
-	"{{.Module}}/pkg/internal/middleware"
-	"{{.Module}}/pkg/internal/trace"
+	"{{.Module}}/pkg/lib/log"
+	lib_middleware "{{.Module}}/pkg/lib/middleware"
+	"{{.Module}}/pkg/lib/trace"
 
 	"github.com/go-chi/chi/v5"
 	chi_middleware "github.com/go-chi/chi/v5/middleware"
@@ -57,7 +57,7 @@ func serving(ctx context.Context) {
 	})
 	// 创建路由
 	r := chi.NewRouter()
-	r.Use(withCors.Handler, middleware.TraceId, middleware.Recovery)
+	r.Use(withCors.Handler, lib_middleware.TraceId, lib_middleware.Recovery)
 	r.Mount("/debug", chi_middleware.Profiler())
 	// 注册路由
 	router.App(r)

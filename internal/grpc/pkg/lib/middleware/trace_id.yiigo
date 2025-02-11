@@ -3,7 +3,7 @@ package middleware
 import (
 	"context"
 
-	"{{.Module}}/pkg/internal/trace"
+	"{{.Module}}/pkg/lib/trace"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"

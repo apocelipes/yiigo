@@ -8,27 +8,19 @@ import (
 	"time"
 
 	"{{.Module}}/pkg/{{.AppPkg}}/api"
-	"{{.Module}}/pkg/internal/log"
-	"{{.Module}}/pkg/internal/trace"
+	"{{.Module}}/pkg/lib/log"
+	"{{.Module}}/pkg/lib/trace"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/rs/cors"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-func NewHttpServer(ctx context.Context) *http.Server {
-	addr := ":" + viper.GetString("port.http")
-	// Create a gRPC client conn
-	conn, err := grpc.NewClient("0.0.0.0:"+viper.GetString("port.grpc"), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatal(ctx, "Error grpc.NewClient", zap.Error(err))
-	}
-	defer conn.Close()
+func NewHttpServer(ctx context.Context, conn *grpc.ClientConn) *http.Server {
 	// Create http mux with health check
 	mux := runtime.NewServeMux(
 		runtime.WithHealthzEndpoint(grpc_health_v1.NewHealthClient(conn)),
@@ -61,7 +53,7 @@ func NewHttpServer(ctx context.Context) *http.Server {
 		}),
 	)
 	// Register http handler
-	if err = registerHttp(ctx, mux, conn); err != nil {
+	if err := registerHttp(ctx, mux, conn); err != nil {
 		log.Fatal(ctx, "Error register http", zap.Error(err))
 	}
 	// With CORS
@@ -76,6 +68,7 @@ func NewHttpServer(ctx context.Context) *http.Server {
 		AllowCredentials: true,
 	}).Handler(mux)
 	// Serve HTTP server
+	addr := ":" + viper.GetString("port.http")
 	srv := &http.Server{
 		Addr:         addr,
 		Handler:      withCors,

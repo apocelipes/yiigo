@@ -3,7 +3,7 @@ package validator
 import (
 	"context"
 
-	"{{.Module}}/pkg/internal/log"
+	"{{.Module}}/pkg/lib/log"
 
 	"github.com/bufbuild/protovalidate-go"
 	"go.uber.org/zap"

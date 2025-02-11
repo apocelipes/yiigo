@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"{{.Module}}/pkg/internal/log"
+	"{{.Module}}/pkg/lib/log"
 
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
