@@ -102,9 +102,10 @@ func ({{ $s.Receiver }} *{{ $s.Name }}) Get{{ .Name }}() {{ .Type }} {
 
 func main() {
 	cmd := &cobra.Command{
-		Use:   "gg",
-		Short: "生成Get方法^_^",
-		Long:  "为结构体生成`Get`方法，避免空指针导致Panic",
+		Use:     "gg",
+		Short:   "生成Get方法^_^",
+		Long:    "为结构体生成`Get`方法，避免空指针导致Panic",
+		Version: "v1.0.0",
 		Example: internal.CmdExamples(
 			"gg xxx.go",
 			"//go:generate gg xxx.go",

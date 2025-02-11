@@ -14,9 +14,10 @@ import (
 
 func main() {
 	cmd := &cobra.Command{
-		Use:   "yiigo",
-		Short: "项目脚手架",
-		Long:  "项目脚手架，用于快速创建Go项目",
+		Use:     "yiigo",
+		Short:   "项目脚手架",
+		Long:    "项目脚手架，用于快速创建Go项目",
+		Version: "v1.0.0",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			if cmd.Use == "new" && len(args) != 0 {
 				if err := os.MkdirAll(args[0], 0o775); err != nil {
