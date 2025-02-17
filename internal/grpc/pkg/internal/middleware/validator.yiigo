@@ -2,9 +2,8 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 
-	"{{.Module}}/pkg/internal/result"
+	"{{.Module}}/pkg/internal/code"
 	"{{.Module}}/pkg/internal/validator"
 
 	"google.golang.org/grpc"
@@ -15,7 +14,7 @@ func Validator(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, ha
 	msg, ok := req.(proto.Message)
 	if ok {
 		if err := validator.Check(msg); err != nil {
-			return nil, result.ErrParams(fmt.Errorf("params invalid: %w", err)).Error(ctx)
+			return nil, code.ErrParams.Err(ctx, err.Error())
 		}
 	}
 	return handler(ctx, req)
