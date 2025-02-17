@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	"{{.Module}}/pkg/{{.AppPkg}}/service/greeter"
+	"{{.Module}}/pkg/internal/code"
 	"{{.Module}}/pkg/lib/log"
-	"{{.Module}}/pkg/internal/result"
-	"{{.Module}}/pkg/lib/util"
 
-	"github.com/pkg/errors"
+	"github.com/yiigo/contrib"
+	"github.com/yiigo/contrib/result"
 	"go.uber.org/zap"
 )
 
@@ -16,9 +16,9 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	req := new(greeter.ReqHello)
-	if err := util.BindJSON(r, req); err != nil {
+	if err := contrib.BindJSON(r, req); err != nil {
 		log.Error(ctx, "Error params", zap.Error(err))
-		result.ErrParams(result.E(errors.WithMessage(err, "参数错误"))).JSON(w, r)
+		result.Err(code.ErrParams, err.Error()).JSON(w, r)
 		return
 	}
 	greeter.Hello(ctx, req).JSON(w, r)

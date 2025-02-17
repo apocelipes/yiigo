@@ -7,14 +7,14 @@ import (
 	"sync"
 	"time"
 
+	"{{.Module}}/pkg/internal/code"
 	"{{.Module}}/pkg/internal/identity"
 	"{{.Module}}/pkg/lib/log"
-	"{{.Module}}/pkg/internal/result"
 
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/pkg/errors"
 	"github.com/yiigo/contrib"
 	"github.com/tidwall/pretty"
+	"github.com/yiigo/contrib/result"
 	"go.uber.org/zap"
 )
 
@@ -71,7 +71,8 @@ func Log(next http.Handler) http.Handler {
 		if r.Body != nil && r.Body != http.NoBody {
 			b, err := io.ReadAll(r.Body) // 取出Body
 			if err != nil {
-				result.ErrSystem(result.E(errors.WithMessage(err, "请求Body读取失败"))).JSON(w, r)
+				log.Error(r.Context(), "Error io.ReadAll", zap.Error(err))
+				result.Err(code.ErrSystem).JSON(w, r)
 				return
 			}
 			_ = r.Body.Close() // 关闭原Body

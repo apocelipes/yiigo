@@ -1,0 +1,13 @@
+package code
+
+import "github.com/yiigo/contrib/result"
+
+var (
+	ErrParams   = result.ErrCode(10000, "参数错误")
+	ErrAuth     = result.ErrCode(20000, "未授权，请先登录")
+	ErrPerm     = result.ErrCode(30000, "权限不足")
+	ErrNotFound = result.ErrCode(40000, "数据不存在")
+	ErrSystem   = result.ErrCode(50000, "内部服务器错误，请稍后重试")
+	ErrData     = result.ErrCode(60000, "数据异常，请稍后重试")
+	ErrService  = result.ErrCode(70000, "服务异常，请稍后重试")
+)
