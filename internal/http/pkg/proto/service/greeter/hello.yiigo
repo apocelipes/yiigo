@@ -6,7 +6,7 @@ import (
 	"{{.Module}}/pkg/{{.AppPkg}}/api"
 )
 
-func New() api.HttpGreeter {
+func New() api.HttpGreeterService {
 	return new(greeter)
 }
 

@@ -30,6 +30,6 @@ func App(r chi.Router) {
 	// r.Method(http.MethodGet, "/metrics", promhttp.Handler())
 
 	r.With(lib_middleware.Log).Group(func(r chi.Router) {
-		api.RegisterHttpGreeter(r, greeter.New())
+		api.RegisterHttpGreeterService(r, greeter.New())
 	})
 }
