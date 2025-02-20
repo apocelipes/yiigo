@@ -17,6 +17,16 @@ go install github.com/yiigo/yiigo/cmd/yiigo@latest
 
 进一步了解 👉 [详情](cmd/yiigo/README.md)
 
+## protoc-gen-yiigo
+
+配合 `yiigo`，使用 `proto` 定义API，自动生成路由和服务注册
+
+```shell
+go install github.com/yiigo/yiigo/cmd/protoc-gen-yiigo@latest
+```
+
+进一步了解 👉 [详情](cmd/protoc-gen-yiigo/README.md)
+
 ## Getter生成器
 
 受 `protoc-gen-go` 启发，为结构体生成 `Get` 方法【支持泛型!!!】，以避免空指针引起的Panic
