@@ -23,42 +23,43 @@ type Params struct {
 	AppPkg  string
 	AppName string
 	DockerF string
+	Proto   bool
 }
 
-func InitHttpProject(root, mod string, apps ...string) {
+func InitHttpProject(root, mod string, proto bool, apps ...string) {
 	// 创建项目
-	initProject(root, mod, http.FS)
+	initProject(root, mod, proto, http.FS)
 	// 创建App(单应用)
 	if len(apps) == 0 {
-		initApp(root, mod, "", http.FS)
+		initApp(root, mod, "", proto, http.FS)
 		return
 	}
 	// 创建App(多应用)
 	for _, name := range apps {
-		initApp(root, mod, name, http.FS)
+		initApp(root, mod, name, proto, http.FS)
 	}
 }
 
-func InitHttpApp(root, mod, name string) {
-	initApp(root, mod, name, http.FS)
+func InitHttpApp(root, mod, name string, proto bool) {
+	initApp(root, mod, name, proto, http.FS)
 }
 
 func InitGrpcProject(root, mod string, apps ...string) {
 	// 创建项目
-	initProject(root, mod, grpc.FS)
+	initProject(root, mod, false, grpc.FS)
 	// 创建App(单应用)
 	if len(apps) == 0 {
-		initApp(root, mod, "", grpc.FS)
+		initApp(root, mod, "", false, grpc.FS)
 		return
 	}
 	// 创建App(多应用)
 	for _, name := range apps {
-		initApp(root, mod, name, grpc.FS)
+		initApp(root, mod, name, false, grpc.FS)
 	}
 }
 
 func InitGrpcApp(root, mod, name string) {
-	initApp(root, mod, name, grpc.FS)
+	initApp(root, mod, name, false, grpc.FS)
 }
 
 func InitEnt(root, mod, name string) {
@@ -83,8 +84,11 @@ func InitEnt(root, mod, name string) {
 	})
 }
 
-func initProject(root, mod string, fsys embed.FS) {
-	params := &Params{Module: mod}
+func initProject(root, mod string, proto bool, fsys embed.FS) {
+	params := &Params{
+		Module: mod,
+		Proto:  proto,
+	}
 	// 项目根目录文件
 	files, _ := fs.ReadDir(fsys, ".")
 	for _, v := range files {
@@ -114,12 +118,13 @@ func initProject(root, mod string, fsys embed.FS) {
 	})
 }
 
-func initApp(root, mod, name string, fsys embed.FS) {
+func initApp(root, mod, name string, proto bool, fsys embed.FS) {
 	params := &Params{
 		Module:  mod,
 		AppPkg:  "app",
 		AppName: root,
 		DockerF: "Dockerfile",
+		Proto:   proto,
 	}
 	if len(name) != 0 {
 		params.AppPkg = "app/" + name
@@ -127,6 +132,21 @@ func initApp(root, mod, name string, fsys embed.FS) {
 		params.DockerF = name + ".dockerfile"
 	}
 	// app目录文件
+	if proto {
+		_ = fs.WalkDir(fsys, "pkg/proto", func(path string, d fs.DirEntry, err error) error {
+			if d.IsDir() || filepath.Ext(path) == ".go" {
+				return nil
+			}
+			appPath := strings.Replace(path, "proto", "app", 1)
+			output := genOutput(root, appPath, name)
+			if len(name) != 0 {
+				output = strings.Replace(output, "/app", "/app/"+name, 1)
+			}
+			buildTmpl(fsys, path, filepath.Clean(output), params)
+			return nil
+		})
+		return
+	}
 	_ = fs.WalkDir(fsys, "pkg/app", func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() || filepath.Ext(path) == ".go" {
 			return nil

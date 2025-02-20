@@ -15,6 +15,7 @@ go install github.com/yiigo/yiigo/cmd/yiigo@latest
 ```shell
 # http
 yiigo new demo
+yiigo new demo --proto # 使用proto定义API
 yiigo new demo --mod=xxx.com/demo # 指定module名称
 .
 ├── go.mod
@@ -61,6 +62,7 @@ yiigo new demo --mod=xxx.com/demo --grpc # 指定module名称
 ```shell
 # http
 yiigo new demo --apps=foo,bar
+yiigo new demo --apps=foo,bar --proto # 使用proto定义API
 yiigo new demo --mod=xxx.com/demo --apps=foo,bar
 yiigo new demo --mod=xxx.com/demo --apps=foo --apps=bar
 .
@@ -118,8 +120,11 @@ yiigo new demo --mod=xxx.com/demo --apps=foo --apps=bar --grpc
 
 ```shell
 # 多应用项目适用，需在项目根目录执行（即：go.mod所在目录）
-yiigo app foo # 创建应用 -- foo
-yiigo app foo bar # 创建两个应用 -- foo 和 bar
+yiigo app foo # 创建HTTP应用 -- foo
+yiigo app foo --proto # 使用proto定义API
+yiigo app foo --grpc # 创建gRPC应用
+yiigo app foo bar # 创建两个HTTP应用 -- foo 和 bar
+yiigo app foo bar --grpc # 创建两个gRPC应用 -- foo 和 bar
 .
 ├── go.mod
 ├── go.sum

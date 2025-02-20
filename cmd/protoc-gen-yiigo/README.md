@@ -1,0 +1,33 @@
+# protoc-gen-yiigo
+
+配合`yiigo`，使用`proto`定义API，自动生成路由和服务注册
+
+## 安装
+
+```shell
+go install github.com/yiigo/yiigo/cmd/protoc-gen-yiigo@latest
+```
+
+## 使用
+
+```shell
+# buf.gen.yaml
+version: v2
+managed:
+  enabled: true
+  disable:
+    - module: buf.build/googleapis/googleapis
+      file_option: go_package
+    - module: buf.build/bufbuild/protovalidate
+      file_option: go_package_prefix
+plugins:
+  - local: protoc-gen-go
+    out: api
+    opt: paths=source_relative
+  - local: protoc-gen-go-grpc
+    out: api
+    opt: paths=source_relative,require_unimplemented_servers=false
+  - local: protoc-gen-yiigo
+    out: api
+    opt: paths=source_relative
+```

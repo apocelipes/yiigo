@@ -15,5 +15,19 @@ Go Web项目快速开发脚手架
 ### 前提条件
 
 ```sh
+# orm
 go install entgo.io/ent/cmd/ent@latest
+{{- if .Proto }}
+
+# proto
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+go install github.com/yiigo/yiigo/cmd/protoc-gen-yiigo@latest
+
+# build
+go install github.com/bufbuild/buf/cmd/buf@latest
+
+# swagger
+go install github.com/go-swagger/go-swagger/cmd/swagger@latest
+{{- end }}
 ```

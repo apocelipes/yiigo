@@ -3,9 +3,11 @@ module github.com/yiigo/yiigo
 go 1.23.0
 
 require (
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	golang.org/x/mod v0.23.0
 	golang.org/x/tools v0.30.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20250219182151-9fdb1cabc7b2
+	google.golang.org/protobuf v1.36.5
 )
 
 require (

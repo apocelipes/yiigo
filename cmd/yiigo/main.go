@@ -39,6 +39,7 @@ func main() {
 
 func project() *cobra.Command {
 	var grpc bool
+	var proto bool
 	var mod string
 	var apps []string
 	cmd := &cobra.Command{
@@ -79,7 +80,7 @@ func project() *cobra.Command {
 			if grpc {
 				internal.InitGrpcProject(workDir, mod, apps...)
 			} else {
-				internal.InitHttpProject(workDir, mod, apps...)
+				internal.InitHttpProject(workDir, mod, proto, apps...)
 			}
 			// go mod init
 			fmt.Println("🍺 执行 go mod init")
@@ -101,6 +102,7 @@ func project() *cobra.Command {
 	}
 	// 注册参数
 	cmd.Flags().BoolVar(&grpc, "grpc", false, "创建gRPC项目")
+	cmd.Flags().BoolVar(&proto, "proto", false, "使用proto定义API")
 	cmd.Flags().StringVar(&mod, "mod", "", "设置Module名称（默认为项目名称）")
 	cmd.Flags().StringSliceVar(&apps, "apps", []string{}, "创建多应用项目")
 	return cmd
@@ -108,6 +110,7 @@ func project() *cobra.Command {
 
 func app() *cobra.Command {
 	var grpc bool
+	var proto bool
 	cmd := &cobra.Command{
 		Use:   "app",
 		Short: "创建应用",
@@ -151,7 +154,7 @@ func app() *cobra.Command {
 						fmt.Printf("👿 目录(%s)不为空，请确认！\n", path)
 						return
 					}
-					internal.InitHttpApp(".", f.Module.Mod.Path, name)
+					internal.InitHttpApp(".", f.Module.Mod.Path, name, proto)
 				}
 			}
 			// go mod tidy
@@ -166,6 +169,7 @@ func app() *cobra.Command {
 	}
 	// 注册参数
 	cmd.Flags().BoolVar(&grpc, "grpc", false, "创建gRPC应用")
+	cmd.Flags().BoolVar(&proto, "proto", false, "使用proto定义API")
 	return cmd
 }
 
