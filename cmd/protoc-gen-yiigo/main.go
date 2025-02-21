@@ -124,17 +124,17 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 	g.P("}")
 	g.P()
 	// Register service HttpServer.
-	g.P("func Register", serverType, "(r ", chiPkg.Ident("Router"), ", srv ", serverType, ") {")
+	g.P("func Register", serverType, "(r ", chiPkg.Ident("Router"), ", svc ", serverType, ") {")
 	for _, m := range service.Methods {
 		rule, ok := proto.GetExtension(m.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
 		if rule != nil && ok {
 			method, path := getHttpRouter(rule)
 			g.P(strings.TrimSuffix(m.Comments.Leading.String(), "\n"))
-			g.P("r.", method, `("`, path, `", _`, service.GoName, "_", m.GoName, `(srv))`)
+			g.P("r.", method, `("`, path, `", _`, service.GoName, "_", m.GoName, `(svc))`)
 			// additional bindings
 			for _, bind := range rule.AdditionalBindings {
 				method, path := getHttpRouter(bind)
-				g.P("r.", method, `("`, path, `", _`, service.GoName, "_", m.GoName, `(srv))`)
+				g.P("r.", method, `("`, path, `", _`, service.GoName, "_", m.GoName, `(svc))`)
 			}
 		}
 	}
@@ -142,7 +142,7 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 	g.P()
 	// Register service methods.
 	for _, m := range service.Methods {
-		g.P("func _", service.GoName, "_", m.GoName, "(srv ", serverType, ") http.HandlerFunc {")
+		g.P("func _", service.GoName, "_", m.GoName, "(svc ", serverType, ") http.HandlerFunc {")
 		g.P("return func(w ", httpPkg.Ident("ResponseWriter"), ", r *", httpPkg.Ident("Request"), ") {")
 		g.P("ctx := r.Context()")
 		g.P("// parse request")
@@ -152,7 +152,7 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 		g.P("return")
 		g.P("}")
 		g.P("// call service")
-		g.P("resp, err := srv.", m.GoName, "(ctx, req)")
+		g.P("resp, err := svc.", m.GoName, "(ctx, req)")
 		g.P("if err != nil {")
 		g.P(resultPkg.Ident("Err"), "(err).JSON(w, r)")
 		g.P("return")
