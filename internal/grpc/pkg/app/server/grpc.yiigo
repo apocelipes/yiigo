@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"{{.Module}}/pkg/{{.AppPkg}}/api"
-	"{{.Module}}/pkg/{{.AppPkg}}/service"
+	"{{.Module}}/pkg/{{.AppPkg}}/service/greeter"
 	"{{.Module}}/pkg/lib/log"
 	internal_middleware "{{.Module}}/pkg/internal/middleware"
 	lib_middleware "{{.Module}}/pkg/lib/middleware"
@@ -46,6 +46,6 @@ func ServeGrpc(ctx context.Context, srv *grpc.Server) {
 // 服务注册
 func registerGrpc(s *grpc.Server) {
 	grpc_health_v1.RegisterHealthServer(s, health.NewServer())
-	api.RegisterGreeterServer(s, &service.GreeterService{})
+	api.RegisterGreeterServiceServer(s, greeter.New())
 }
 

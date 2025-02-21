@@ -10,7 +10,9 @@ func New() api.HttpGreeterService {
 	return new(greeter)
 }
 
-type greeter struct{}
+type greeter struct{
+	api.UnimplementedHttpGreeterService
+}
 
 func (g *greeter) SayHello(ctx context.Context, req *api.HelloRequest) (*api.HelloResponse, error) {
 	return &api.HelloResponse{

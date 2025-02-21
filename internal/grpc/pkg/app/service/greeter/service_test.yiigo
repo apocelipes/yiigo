@@ -1,4 +1,4 @@
-package service
+package greeter
 
 import (
 	"context"
@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 }
 
 func Test_Greeter_SayHello(t *testing.T) {
-	svc := new(GreeterService)
+	svc := New()
 	resp, err := svc.SayHello(context.Background(), &api.HelloRequest{
 		Name: "world",
 	})

@@ -6,7 +6,7 @@
   },
   "tags": [
     {
-      "name": "api.Greeter"
+      "name": "api.GreeterService"
     }
   ],
   "consumes": [
@@ -19,7 +19,7 @@
     "/v1/greeter": {
       "post": {
         "summary": "Sends a greeting",
-        "operationId": "Greeter_SayHello",
+        "operationId": "GreeterService_SayHello",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -45,7 +45,7 @@
           }
         ],
         "tags": [
-          "api.Greeter"
+          "api.GreeterService"
         ]
       }
     }

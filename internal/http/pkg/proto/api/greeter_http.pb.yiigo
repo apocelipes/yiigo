@@ -8,6 +8,7 @@ package api
 
 import (
 	context "context"
+	errors "errors"
 	v5 "github.com/go-chi/chi/v5"
 	contrib "github.com/yiigo/contrib"
 	result "github.com/yiigo/contrib/result"
@@ -20,13 +21,24 @@ type HttpGreeterService interface {
 	SayHello(ctx context.Context, req *HelloRequest) (*HelloResponse, error)
 }
 
-func RegisterHttpGreeterService(r v5.Router, srv HttpGreeterService) {
-	// Sends a greeting
-	r.Post("/v1/greeter", _GreeterService_SayHello(srv))
-	r.Get("/v1/greeter", _GreeterService_SayHello(srv))
+// UnimplementedHttpGreeterService should be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedHttpGreeterService struct{}
+
+func (UnimplementedHttpGreeterService) SayHello(context.Context, *HelloRequest) (*HelloResponse, error) {
+	return nil, errors.New("method SayHello not implemented")
 }
 
-func _GreeterService_SayHello(srv HttpGreeterService) http.HandlerFunc {
+func RegisterHttpGreeterService(r v5.Router, svc HttpGreeterService) {
+	// Sends a greeting
+	r.Post("/v1/greeter", _GreeterService_SayHello(svc))
+	r.Get("/v1/greeter", _GreeterService_SayHello(svc))
+}
+
+func _GreeterService_SayHello(svc HttpGreeterService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		// parse request
@@ -36,7 +48,7 @@ func _GreeterService_SayHello(srv HttpGreeterService) http.HandlerFunc {
 			return
 		}
 		// call service
-		resp, err := srv.SayHello(ctx, req)
+		resp, err := svc.SayHello(ctx, req)
 		if err != nil {
 			result.Err(err).JSON(w, r)
 			return

@@ -88,8 +88,8 @@ func ServeHttp(ctx context.Context, srv *http.Server) {
 
 // 服务注册
 func registerHttp(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
-	if err := api.RegisterGreeterHandler(ctx, mux, conn); err != nil {
-		return fmt.Errorf("RegisterGreeterHandler: %w", err)
+	if err := api.RegisterGreeterServiceHandler(ctx, mux, conn); err != nil {
+		return fmt.Errorf("RegisterGreeterServiceHandler: %w", err)
 	}
 	return nil
 }
