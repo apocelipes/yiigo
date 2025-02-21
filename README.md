@@ -18,7 +18,7 @@ go install github.com/yiigo/yiigo/cmd/yiigo@latest
 
 ## protoc-gen-yiigo
 
-配合 `yiigo`，使用 `proto` 定义API，自动生成路由和服务注册
+使用 `proto` 定义API，基于 [chi](https://github.com/go-chi/chi) 自动生成路由和服务注册
 
 ```shell
 go install github.com/yiigo/yiigo/cmd/protoc-gen-yiigo@latest
