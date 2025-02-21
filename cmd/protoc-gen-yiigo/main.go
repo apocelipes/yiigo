@@ -39,15 +39,11 @@ func main() {
 }
 
 const (
-	fmtPkg       = protogen.GoImportPath("fmt")
-	contextPkg   = protogen.GoImportPath("context")
-	httpPkg      = protogen.GoImportPath("net/http")
-	jsonPkg      = protogen.GoImportPath("encoding/json")
-	chiPkg       = protogen.GoImportPath("github.com/go-chi/chi/v5")
-	contribPkg   = protogen.GoImportPath("github.com/yiigo/contrib")
-	resultPkg    = protogen.GoImportPath("github.com/yiigo/contrib/result")
-	grpcPkg      = protogen.GoImportPath("google.golang.org/grpc")
-	protojsonPkg = protogen.GoImportPath("google.golang.org/protobuf/encoding/protojson")
+	contextPkg = protogen.GoImportPath("context")
+	httpPkg    = protogen.GoImportPath("net/http")
+	chiPkg     = protogen.GoImportPath("github.com/go-chi/chi/v5")
+	contribPkg = protogen.GoImportPath("github.com/yiigo/contrib")
+	resultPkg  = protogen.GoImportPath("github.com/yiigo/contrib/result")
 )
 
 // generateFile generates a _http.pb.go file containing HTTP service definitions.
@@ -133,7 +129,7 @@ func genService(g *protogen.GeneratedFile, service *protogen.Service) {
 		rule, ok := proto.GetExtension(m.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
 		if rule != nil && ok {
 			method, path := getHttpRouter(rule)
-			g.P(comment(m.Comments.Leading.String()))
+			g.P(strings.TrimSuffix(m.Comments.Leading.String(), "\n"))
 			g.P("r.", method, `("`, path, `", _`, service.GoName, "_", m.GoName, `(srv))`)
 			// additional bindings
 			for _, bind := range rule.AdditionalBindings {
@@ -183,13 +179,6 @@ func getHttpRouter(rule *annotations.HttpRule) (string, string) {
 		return v.Custom.GetKind(), v.Custom.GetPath()
 	}
 	return "Unknown", ""
-}
-
-func comment(s string) string {
-	if index := strings.Index(s, "\n"); index != -1 {
-		return s[:index]
-	}
-	return s
 }
 
 func unexport(s string) string { return strings.ToLower(s[:1]) + s[1:] }
