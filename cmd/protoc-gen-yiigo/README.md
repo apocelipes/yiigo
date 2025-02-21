@@ -26,7 +26,7 @@ plugins:
     opt: paths=source_relative
   - local: protoc-gen-go-grpc
     out: api
-    opt: paths=source_relative,require_unimplemented_servers=false
+    opt: paths=source_relative
   - local: protoc-gen-yiigo
     out: api
     opt: paths=source_relative
