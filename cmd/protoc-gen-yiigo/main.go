@@ -356,7 +356,7 @@ func genCodeContent(f *protogen.File, gf *protogen.GeneratedFile) {
 	for _, e := range f.Enums {
 		for _, v := range e.Values {
 			name := string(e.Desc.Name()) + case2camel(string(v.Desc.Name()))
-			gf.P("func Is", e.Desc.Name(), name, "(err error) bool {")
+			gf.P("func Is", name, "(err error) bool {")
 			gf.P("return ", codesPkg.Ident("Is"), "(err, ", name, ")")
 			gf.P("}")
 			gf.P()
