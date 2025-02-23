@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"google.golang.org/genproto/googleapis/api/annotations"
@@ -170,12 +171,12 @@ func genServerRegister(gf *protogen.GeneratedFile, service *protogen.Service, se
 	gf.P("func Register", serviceType, "(r ", chiPkg.Ident("Router"), ", svc ", serviceType, ") {")
 	for _, m := range service.Methods {
 		rule, ok := proto.GetExtension(m.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
-		if rule != nil && ok {
+		if ok && rule != nil {
 			method, path := getHttpRouter(rule)
 			gf.P(strings.TrimSuffix(m.Comments.Leading.String(), "\n"))
 			gf.P("r.", method, `("`, path, `", _`, service.GoName, "_", m.GoName, `(svc))`)
 			// additional bindings
-			for _, bind := range rule.AdditionalBindings {
+			for _, bind := range rule.GetAdditionalBindings() {
 				method, path := getHttpRouter(bind)
 				gf.P("r.", method, `("`, path, `", _`, service.GoName, "_", m.GoName, `(svc))`)
 			}
@@ -257,25 +258,37 @@ func genClientNew(gf *protogen.GeneratedFile, _ *protogen.Service, serviceType s
 
 func genClientMethods(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
 	for _, m := range service.Methods {
+		rule, ok := proto.GetExtension(m.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
+		if !ok || rule == nil {
+			continue
+		}
+		method, path := getHttpRouter(rule)
+		isGetMethod := false
+		if strings.ToUpper(method) == http.MethodGet {
+			isGetMethod = true
+		}
 		gf.P()
 		gf.P(strings.TrimSuffix(m.Comments.Leading.String(), "\n"))
 		gf.P("func (c *", unexport(serviceType), ") ", m.GoName, "(ctx ", ctxPkg.Ident("Context"), ", in *", gf.QualifiedGoIdent(m.Input.GoIdent), ", opts ...", protosPkg.Ident("RequestOption"), ") (*"+gf.QualifiedGoIdent(m.Output.GoIdent)+", error) {")
+		if isGetMethod {
+			gf.P("query := ", protosPkg.Ident("MessageToQuery"), "(in)")
+		}
 		gf.P("ret := new(", protosPkg.Ident("ApiResult[*"), gf.QualifiedGoIdent(m.Output.GoIdent), "])")
 		gf.P("req := c.client.R().")
 		gf.P("SetContext(ctx).")
 		gf.P("SetHeader(", contribPkg.Ident("HeaderContentType"), ", ", contribPkg.Ident("ContentJSON"), ").")
-		gf.P("SetBody(in).")
+		if isGetMethod {
+			gf.P("SetQueryParamsFromValues(query).")
+		} else {
+			gf.P("SetBody(in).")
+		}
 		gf.P("SetResult(ret)")
 		gf.P("for _, f := range opts {")
 		gf.P("f(req)")
 		gf.P("}")
-		rule, ok := proto.GetExtension(m.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
-		if rule != nil && ok {
-			method, path := getHttpRouter(rule)
-			gf.P("if _, err := req.", method, `("`, path, `"); err != nil {`)
-			gf.P("return nil, err")
-			gf.P("}")
-		}
+		gf.P("if _, err := req.", method, `("`, path, `"); err != nil {`)
+		gf.P("return nil, err")
+		gf.P("}")
 		gf.P("if ret.Code != 0 {")
 		gf.P("return nil, ", codesPkg.Ident("New"), "(ret.Code, ret.Msg)")
 		gf.P("}")
