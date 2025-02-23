@@ -12,7 +12,7 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
-const version = "v1.0.0"
+const version = "v1.0.1"
 
 func main() {
 	showVersion := flag.Bool("version", false, "print the version and exit")
@@ -32,23 +32,39 @@ func main() {
 			if !f.Generate {
 				continue
 			}
-			generateFile(p, f)
+			genServiceFile(p, f)
+			genCodeFile(p, f)
 		}
 		return nil
 	})
 }
 
 const (
-	contextPkg = protogen.GoImportPath("context")
+	ctxPkg     = protogen.GoImportPath("context")
 	errorPkg   = protogen.GoImportPath("errors")
 	httpPkg    = protogen.GoImportPath("net/http")
 	chiPkg     = protogen.GoImportPath("github.com/go-chi/chi/v5")
 	contribPkg = protogen.GoImportPath("github.com/yiigo/contrib")
 	resultPkg  = protogen.GoImportPath("github.com/yiigo/contrib/result")
+	restyPkg   = protogen.GoImportPath("github.com/go-resty/resty/v2")
+	protosPkg  = protogen.GoImportPath("github.com/yiigo/contrib/protos")
+	codesPkg   = protogen.GoImportPath("github.com/yiigo/contrib/codes")
 )
 
+func protocVersion(p *protogen.Plugin) string {
+	v := p.Request.GetCompilerVersion()
+	if v == nil {
+		return "(unknown)"
+	}
+	var suffix string
+	if s := v.GetSuffix(); s != "" {
+		suffix = "-" + s
+	}
+	return fmt.Sprintf("v%d.%d.%d%s", v.GetMajor(), v.GetMinor(), v.GetPatch(), suffix)
+}
+
 // generateFile generates a _http.pb.go file containing HTTP service definitions.
-func generateFile(p *protogen.Plugin, f *protogen.File) *protogen.GeneratedFile {
+func genServiceFile(p *protogen.Plugin, f *protogen.File) *protogen.GeneratedFile {
 	if len(f.Services) == 0 {
 		return nil
 	}
@@ -66,65 +82,62 @@ func generateFile(p *protogen.Plugin, f *protogen.File) *protogen.GeneratedFile 
 	gf.P()
 	gf.P("package ", f.GoPackageName)
 	gf.P()
-	generateFileContent(f, gf)
+	genFileContent(f, gf)
 	return gf
 }
 
-func protocVersion(p *protogen.Plugin) string {
-	v := p.Request.GetCompilerVersion()
-	if v == nil {
-		return "(unknown)"
-	}
-	var suffix string
-	if s := v.GetSuffix(); s != "" {
-		suffix = "-" + s
-	}
-	return fmt.Sprintf("v%d.%d.%d%s", v.GetMajor(), v.GetMinor(), v.GetPatch(), suffix)
-}
-
 // generateFileContent generates the HTTP service definitions, excluding the package statement.
-func generateFileContent(f *protogen.File, gf *protogen.GeneratedFile) {
-	if len(f.Services) == 0 {
-		return
-	}
+func genFileContent(f *protogen.File, gf *protogen.GeneratedFile) {
 	for _, service := range f.Services {
 		genService(gf, service)
 	}
 }
 
 func genService(gf *protogen.GeneratedFile, service *protogen.Service) {
-	serviceType := "Http" + service.GoName
-	// Server interface.
-	_genInterface(gf, service, serviceType)
+	serverType := service.GoName + "HttpServer"
+	// Server interface
+	genServerInterface(gf, service, serverType)
 	gf.P()
-	// Unimplemented server.
-	_genUnimplement(gf, service, serviceType)
+	// Unimplemented HttpServer
+	genServerUnimplement(gf, service, serverType)
 	gf.P()
-	// Register service HttpServer.
-	_genRegister(gf, service, serviceType)
+	// Register HttpServer
+	genServerRegister(gf, service, serverType)
+	// Register HttpServer methods
+	genServerMethods(gf, service, serverType)
 	gf.P()
-	// Register service methods.
-	_genMethods(gf, service, serviceType)
+	gf.P("// --------------------------------------------- http client ---------------------------------------------")
+	gf.P()
+	// Client interface
+	clientType := service.GoName + "HttpClient"
+	// Client interface
+	genClientInterface(gf, service, clientType)
+	gf.P()
+	// New HttpClient
+	genClientNew(gf, service, clientType)
+	// Register HttpClient methods
+	genClientMethods(gf, service, clientType)
+	gf.P()
 }
 
-// Method(ctx context.Context, req *MethodReq) (*MethodResp, error)
-func signature(gf *protogen.GeneratedFile, method *protogen.Method) string {
+// Method(ctx context.Context, in *MethodReq) (*MethodResp, error)
+func serverSignature(gf *protogen.GeneratedFile, method *protogen.Method) string {
 	var reqArgs []string
 	// params
-	reqArgs = append(reqArgs, "ctx "+gf.QualifiedGoIdent(contextPkg.Ident("Context")))
-	reqArgs = append(reqArgs, "req *"+gf.QualifiedGoIdent(method.Input.GoIdent))
+	reqArgs = append(reqArgs, "ctx "+gf.QualifiedGoIdent(ctxPkg.Ident("Context")))
+	reqArgs = append(reqArgs, "in *"+gf.QualifiedGoIdent(method.Input.GoIdent))
 	// return
 	resp := "(*" + gf.QualifiedGoIdent(method.Output.GoIdent) + ", error)"
 	return method.GoName + "(" + strings.Join(reqArgs, ", ") + ") " + resp
 }
 
-func _genInterface(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
-	gf.P("// ", serviceType, " is the API definition for ", service.GoName)
+func genServerInterface(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
+	gf.P("// ", serviceType, " is the server API definition for ", service.GoName)
 	if service.Desc.Options().(*descriptorpb.ServiceOptions).GetDeprecated() {
 		gf.P("//")
 	}
 	gf.AnnotateSymbol(serviceType, protogen.Annotation{Location: service.Location})
-	// type HttpXXX interface {
+	// type XXXHttpServer interface {
 	gf.P("type ", serviceType, " interface {")
 	for _, m := range service.Methods {
 		if m.Desc.IsStreamingClient() || m.Desc.IsStreamingServer() {
@@ -133,12 +146,12 @@ func _genInterface(gf *protogen.GeneratedFile, service *protogen.Service, servic
 		gf.AnnotateSymbol(serviceType+"."+m.GoName, protogen.Annotation{Location: m.Location})
 		if m.Desc.Options().(*descriptorpb.MethodOptions).GetDeprecated() {
 		}
-		gf.P(m.Comments.Leading, signature(gf, m))
+		gf.P(m.Comments.Leading, serverSignature(gf, m))
 	}
 	gf.P("}")
 }
 
-func _genUnimplement(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
+func genServerUnimplement(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
 	gf.P("// Unimplemented", serviceType, " should be embedded to have")
 	gf.P("// forward compatible implementations.")
 	gf.P("//")
@@ -153,7 +166,7 @@ func _genUnimplement(gf *protogen.GeneratedFile, service *protogen.Service, serv
 	}
 }
 
-func _genRegister(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
+func genServerRegister(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
 	gf.P("func Register", serviceType, "(r ", chiPkg.Ident("Router"), ", svc ", serviceType, ") {")
 	for _, m := range service.Methods {
 		rule, ok := proto.GetExtension(m.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
@@ -171,8 +184,10 @@ func _genRegister(gf *protogen.GeneratedFile, service *protogen.Service, service
 	gf.P("}")
 }
 
-func _genMethods(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
+func genServerMethods(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
 	for _, m := range service.Methods {
+		gf.P()
+		gf.P(strings.TrimSuffix(m.Comments.Leading.String(), "\n"))
 		gf.P("func _", service.GoName, "_", m.GoName, "(svc ", serviceType, ") http.HandlerFunc {")
 		gf.P("return func(w ", httpPkg.Ident("ResponseWriter"), ", r *", httpPkg.Ident("Request"), ") {")
 		gf.P("ctx := r.Context()")
@@ -194,6 +209,81 @@ func _genMethods(gf *protogen.GeneratedFile, service *protogen.Service, serviceT
 	}
 }
 
+// Method(ctx context.Context, in *MethodReq, opts ...protos.RequestOption) (*MethodResp, error)
+func clientSignature(gf *protogen.GeneratedFile, method *protogen.Method) string {
+	var reqArgs []string
+	// params
+	reqArgs = append(reqArgs, "ctx "+gf.QualifiedGoIdent(ctxPkg.Ident("Context")))
+	reqArgs = append(reqArgs, "in *"+gf.QualifiedGoIdent(method.Input.GoIdent))
+	reqArgs = append(reqArgs, "opts ..."+gf.QualifiedGoIdent(protosPkg.Ident("RequestOption")))
+	// return
+	resp := "(*" + gf.QualifiedGoIdent(method.Output.GoIdent) + ", error)"
+	return method.GoName + "(" + strings.Join(reqArgs, ", ") + ") " + resp
+}
+
+func genClientInterface(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
+	gf.P("// ", serviceType, " is the client API definition for ", service.GoName)
+	if service.Desc.Options().(*descriptorpb.ServiceOptions).GetDeprecated() {
+		gf.P("//")
+	}
+	gf.AnnotateSymbol(serviceType, protogen.Annotation{Location: service.Location})
+	// type XXXHttpClient interface {
+	gf.P("type ", serviceType, " interface {")
+	for _, m := range service.Methods {
+		if m.Desc.IsStreamingClient() || m.Desc.IsStreamingServer() {
+			continue
+		}
+		gf.AnnotateSymbol(serviceType+"."+m.GoName, protogen.Annotation{Location: m.Location})
+		if m.Desc.Options().(*descriptorpb.MethodOptions).GetDeprecated() {
+		}
+		gf.P(m.Comments.Leading, clientSignature(gf, m))
+	}
+	gf.P("}")
+}
+
+func genClientNew(gf *protogen.GeneratedFile, _ *protogen.Service, serviceType string) {
+	gf.P("type ", unexport(serviceType), " struct {")
+	gf.P("client *", restyPkg.Ident("Client"))
+	gf.P("}")
+	gf.P()
+	gf.P("func New", serviceType, "(hc *", httpPkg.Ident("Client"), ", opts ...", protosPkg.Ident("ClientOption"), ") ", serviceType, " {")
+	gf.P("c := ", restyPkg.Ident("NewWithClient"), "(hc)")
+	gf.P("for _, f := range opts {")
+	gf.P("f(c)")
+	gf.P("}")
+	gf.P("return &", unexport(serviceType), "{client: c}")
+	gf.P("}")
+}
+
+func genClientMethods(gf *protogen.GeneratedFile, service *protogen.Service, serviceType string) {
+	for _, m := range service.Methods {
+		gf.P()
+		gf.P(strings.TrimSuffix(m.Comments.Leading.String(), "\n"))
+		gf.P("func (c *", unexport(serviceType), ") ", m.GoName, "(ctx ", ctxPkg.Ident("Context"), ", in *", gf.QualifiedGoIdent(m.Input.GoIdent), ", opts ...", protosPkg.Ident("RequestOption"), ") (*"+gf.QualifiedGoIdent(m.Output.GoIdent)+", error) {")
+		gf.P("ret := new(", protosPkg.Ident("ApiResult[*"), gf.QualifiedGoIdent(m.Output.GoIdent), "])")
+		gf.P("req := c.client.R().")
+		gf.P("SetContext(ctx).")
+		gf.P("SetHeader(", contribPkg.Ident("HeaderContentType"), ", ", contribPkg.Ident("ContentJSON"), ").")
+		gf.P("SetBody(in).")
+		gf.P("SetResult(ret)")
+		gf.P("for _, f := range opts {")
+		gf.P("f(req)")
+		gf.P("}")
+		rule, ok := proto.GetExtension(m.Desc.Options(), annotations.E_Http).(*annotations.HttpRule)
+		if rule != nil && ok {
+			method, path := getHttpRouter(rule)
+			gf.P("if _, err := req.", method, `("`, path, `"); err != nil {`)
+			gf.P("return nil, err")
+			gf.P("}")
+		}
+		gf.P("if ret.Code != 0 {")
+		gf.P("return nil, ", codesPkg.Ident("New"), "(ret.Code, ret.Msg)")
+		gf.P("}")
+		gf.P("return ret.Data, nil")
+		gf.P("}")
+	}
+}
+
 func getHttpRouter(rule *annotations.HttpRule) (string, string) {
 	switch v := rule.Pattern.(type) {
 	case *annotations.HttpRule_Get:
@@ -211,5 +301,69 @@ func getHttpRouter(rule *annotations.HttpRule) (string, string) {
 	}
 	return "Unknown", ""
 }
+
+// genCodeFile generates a code.pb.go file containing HTTP service definitions.
+func genCodeFile(p *protogen.Plugin, f *protogen.File) *protogen.GeneratedFile {
+	if f.Proto.GetName() != "code.proto" || len(f.Enums) == 0 {
+		return nil
+	}
+	gf := p.NewGeneratedFile("code_http.pb.go", f.GoImportPath)
+	gf.P("// Code generated by protoc-gen-yiigo. DO NOT EDIT.")
+	gf.P("// versions:")
+	gf.P("// - protoc-gen-yiigo ", version)
+	gf.P("// - protoc           ", protocVersion(p))
+	if f.Proto.GetOptions().GetDeprecated() {
+		gf.P("// ", f.Desc.Path(), " is a deprecated f.")
+	} else {
+		gf.P("// source: ", f.Desc.Path())
+	}
+	gf.P()
+	gf.P("package ", f.GoPackageName)
+	gf.P()
+	genCodeContent(f, gf)
+	return gf
+}
+
+// genCodeContent generates the HTTP code definitions, excluding the package statement.
+func genCodeContent(f *protogen.File, gf *protogen.GeneratedFile) {
+	gf.P("var (")
+	for _, e := range f.Enums {
+		for _, v := range e.Values {
+			msg := strings.ToLower(string(v.Desc.Name()))
+			if comment := string(v.Comments.Trailing); len(comment) != 0 {
+				msg = strings.TrimSpace(comment)
+			}
+			name := string(e.Desc.Name()) + case2camel(string(v.Desc.Name()))
+			gf.P(name, " = ", codesPkg.Ident("New"), "(int(Code_", v.Desc.Name(), `), "`, msg, `")`)
+		}
+		gf.P()
+	}
+	gf.P(")")
+	gf.P()
+	for _, e := range f.Enums {
+		for _, v := range e.Values {
+			name := string(e.Desc.Name()) + case2camel(string(v.Desc.Name()))
+			gf.P("func Is", e.Desc.Name(), name, "(err error) bool {")
+			gf.P("return ", codesPkg.Ident("Is"), "(err, ", name, ")")
+			gf.P("}")
+			gf.P()
+		}
+	}
+}
+
+func case2camel(s string) string {
+	s = strings.ToLower(s)
+	items := strings.Split(s, "_")
+	count := len(items)
+	if count == 1 {
+		return export(s)
+	}
+	for i := 0; i < count; i++ {
+		items[i] = export(items[i])
+	}
+	return strings.Join(items, "")
+}
+
+func export(s string) string { return strings.ToUpper(s[:1]) + s[1:] }
 
 func unexport(s string) string { return strings.ToLower(s[:1]) + s[1:] }
