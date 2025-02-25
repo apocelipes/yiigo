@@ -247,8 +247,9 @@ func genClientNew(gf *protogen.GeneratedFile, _ *protogen.Service, serviceType s
 	gf.P("client *", restyPkg.Ident("Client"))
 	gf.P("}")
 	gf.P()
-	gf.P("func New", serviceType, "(hc *", httpPkg.Ident("Client"), ", opts ...", protosPkg.Ident("ClientOption"), ") ", serviceType, " {")
+	gf.P("func New", serviceType, "(hc *", httpPkg.Ident("Client"), ", host string, opts ...", protosPkg.Ident("ClientOption"), ") ", serviceType, " {")
 	gf.P("c := ", restyPkg.Ident("NewWithClient"), "(hc)")
+	gf.P("c.SetBaseURL(host)")
 	gf.P("for _, f := range opts {")
 	gf.P("f(c)")
 	gf.P("}")
@@ -276,10 +277,10 @@ func genClientMethods(gf *protogen.GeneratedFile, service *protogen.Service, ser
 		gf.P("ret := new(", protosPkg.Ident("ApiResult[*"), gf.QualifiedGoIdent(m.Output.GoIdent), "])")
 		gf.P("req := c.client.R().")
 		gf.P("SetContext(ctx).")
-		gf.P("SetHeader(", contribPkg.Ident("HeaderContentType"), ", ", contribPkg.Ident("ContentJSON"), ").")
 		if isGetMethod {
 			gf.P("SetQueryParamsFromValues(query).")
 		} else {
+			gf.P("SetHeader(", contribPkg.Ident("HeaderContentType"), ", ", contribPkg.Ident("ContentJSON"), ").")
 			gf.P("SetBody(in).")
 		}
 		gf.P("SetResult(ret)")
